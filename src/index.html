@@ -1,15 +1,218 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pagamento de Conta - Delícias Express</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f4f4f4;
+    }
+    .container {
+      text-align: center;
+      width: 100%;
+      max-width: 500px;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    img.logo {
+      max-width: 100%;
+      height: auto;
+    }
+    label, select, input {
+      font-size: 16px;
+      margin-bottom: 10px;
+      display: block;
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box; 
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #27485D;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .resultado {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+      width: 80%;
+      max-width: 500px;
+      display: none;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .resultado p {
+      margin: 5px 0;
+      text-align: center;
+    }
+    .desconto-aplicado {
+      color: green;
+    }
+    .desconto-nao-aplicado {
+      color: red;
+    }
+    .concluir-btn {
+      margin-top: 20px;
+      background-color: #27485D;
+    }
+  </style>
 </head>
-
 <body>
 
-    <script src="index.js"></script>
-</body>
+  <div class="container">
+    <img src="logo.png" alt="Delícias Express Logo" class="logo">
 
+   
+
+    <form id="formPagamento">
+      <!-- Número da Mesa -->
+      <label for="numMesa">Número da Mesa:</label>
+      <select id="numMesa" name="numMesa" required>
+        <option value="">Selecione o número da mesa</option>
+        <!-- Gerar números de 1 a 20 para as mesas -->
+        <script>
+          for (let i = 1; i <= 20; i++) {
+            let option = document.createElement("option");
+            option.value = i;
+            option.textContent = `Mesa ${i}`;
+            document.getElementById("numMesa").appendChild(option);
+          }
+        </script>
+      </select>
+
+      <!-- Número de pessoas -->
+      <label for="numPessoas">Número de Pessoas:</label>
+      <select id="numPessoas" name="numPessoas">
+        <option value="">Selecione o número de pessoas</option>
+       
+        <script>
+          for (let i = 1; i <= 99; i++) {
+            let option = document.createElement("option");
+            option.value = i;
+            option.textContent = i;
+            document.getElementById("numPessoas").appendChild(option);
+          }
+        </script>
+      </select>
+
+      
+      <label for="valorConta">Valor Total da Conta:</label>
+      <input type="text" id="valorConta" name="valorConta" placeholder="Digite o valor da conta" required oninput="formatarValor(this)">
+
+      
+      <label for="metodoPagamento">Método de Pagamento:</label>
+      <select id="metodoPagamento" name="metodoPagamento" required>
+        <option value="">Selecione o método de pagamento</option>
+        <option value="pix">PIX</option>
+        <option value="dinheiro">Dinheiro</option>
+        <option value="cartao">Cartão</option>
+      </select>
+
+      
+      <button type="button" onclick="calcularConta()">Calcular Valor</button>
+    </form>
+  </div>
+
+  
+  <div class="resultado" id="resultado">
+    <p id="informacaoMesa"></p>
+    <p id="informacaoDesconto"></p>
+    <p id="informacaoConta"></p>
+    <p id="informacaoPessoa"></p>
+    <!-- Botão de concluir -->
+    <button class="concluir-btn" onclick="fecharBox()">Concluir</button>
+  </div>
+
+  <script>
+    
+    function formatarValor(input) {
+      let valor = input.value.replace(/\D/g, ''); // Remove tudo o que não for número
+      if (valor.length > 2) {
+        valor = valor.slice(0, valor.length - 2) + ',' + valor.slice(valor.length - 2);
+      }
+      input.value = "R$ " + valor.replace(/\B(?=(\d{3})+(?!\d))/g, "."); // Formata como R$ 150,00
+    }
+
+    
+    function calcularConta() {
+      const numMesa = document.getElementById('numMesa').value;
+      const numPessoas = parseInt(document.getElementById('numPessoas').value);
+      let valorConta = document.getElementById('valorConta').value.replace('R$', '').replace('.', '').replace(',', '.');
+      valorConta = parseFloat(valorConta);
+      const metodoPagamento = document.getElementById('metodoPagamento').value;
+
+    
+      if (!numMesa || !numPessoas || isNaN(valorConta) || !metodoPagamento) {
+        alert('Por favor, preencha todos os campos corretamente.');
+        return;
+      }
+
+      let valorComDesconto = valorConta;
+      let descontoAplicado = false;
+
+      // Aplicar o desconto de 10% se for PIX ou dinheiro
+      if (metodoPagamento === 'pix' || metodoPagamento === 'dinheiro') {
+        valorComDesconto = valorConta * 0.9;
+        descontoAplicado = true;
+      }
+
+      // Calcular o valor por pessoa
+      const valorPorPessoa = valorComDesconto / numPessoas;
+
+      
+      const resultadoDiv = document.getElementById('resultado');
+      resultadoDiv.style.display = 'flex'; // Exibe o box flutuante
+
+      
+      document.getElementById('informacaoMesa').textContent = `Número da Mesa: ${numMesa}`;
+      document.getElementById('informacaoConta').textContent = `Valor total da conta (com desconto, se aplicável): R$ ${valorComDesconto.toFixed(2).replace('.', ',')}`;
+      document.getElementById('informacaoPessoa').textContent = `Valor que cada pessoa deve pagar: R$ ${valorPorPessoa.toFixed(2).replace('.', ',')}`;
+
+      // Exibir se o desconto foi aplicado ou não
+      const infoDesconto = document.getElementById('informacaoDesconto');
+      if (descontoAplicado) {
+        infoDesconto.textContent = `Desconto de 10% aplicado (Pagamento via ${metodoPagamento.toUpperCase()})`;
+        infoDesconto.classList.remove('desconto-nao-aplicado');
+        infoDesconto.classList.add('desconto-aplicado');
+      } else {
+        infoDesconto.textContent = `Nenhum desconto aplicado (Pagamento via CARTÃO)`;
+        infoDesconto.classList.remove('desconto-aplicada');
+        infoDesconto.classList.add('desconto-nao-aplicado');
+      }
+    }
+
+    // Função para fechar o resultado | reiniciar o formulário | limpar os campos
+    function fecharBox() {
+      document.getElementById('resultado').style.display = 'none';
+      document.getElementById('formPagamento').reset();
+    }
+  </script>
+
+</body>
 </html>
